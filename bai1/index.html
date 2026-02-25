@@ -510,10 +510,22 @@
                 let finalScore = (this.score % 1 === 0) ? this.score : this.score.toFixed(2).replace('.', ',');
                 finalScore = finalScore.toString().replace(/,00$/, '').replace(/,(\d)0$/, ',$1');
                 
-                document.getElementById('final-score').innerText = finalScore;
-                this.resultStudentInfo.innerText = `${this.studentName} - Lớp: ${this.studentClass}`;
-                
+                document.getElementById('final-score').innerText = finalScore;                            
                 let comment = "";
+                this.resultStudentInfo.innerText = `${this.studentName} - Lớp: ${this.studentClass}`;
+                // GỬI ĐIỂM VỀ GOOGLE SHEET
+fetch("LINK_WEB_APP", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        name: this.studentName,
+        lop: this.studentClass,
+        bai: "bai1",
+        score: this.score
+    })
+});
                 if (this.score >= 9) comment = "Tuyệt vời! Em hoàn thành bài tập rất xuất sắc.";
                 else if (this.score >= 7) comment = "Kết quả rất tốt. Hãy cố gắng phản xạ nhanh hơn để lấy điểm tối đa nhé.";
                 else if (this.score >= 5) comment = "Khá ổn. Em nên ôn tập kỹ hơn phần hình học phẳng.";
