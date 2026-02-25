@@ -1,18 +1,424 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Bài 2</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trắc nghiệm Toán 6 - Phân số</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                enableMenu: false
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Lexend', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .timer-bar {
+            transition: width 1s linear;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        .mjx-chtml {
+            font-size: 1.15em !important;
+        }
+    </style>
 </head>
+<body class="p-4 md:p-8">
+    <div id="app" class="max-w-3xl mx-auto">
+        <!-- Intro Screen -->
+        <div id="intro-screen" class="glass-card rounded-3xl p-8 text-center animate-fade">
+            <div class="mb-6">
+                <div class="bg-blue-500 w-20 h-20 rounded-2xl mx-auto flex items-center justify-center text-white text-4xl mb-4 shadow-lg">
+                    \(\frac{a}{b}\)
+                </div>
+                <h1 class="text-3xl font-bold text-blue-800 mb-2">Chinh phục Phân số - Toán 6</h1>
+            </div>
+            
+            <div class="bg-blue-50 rounded-2xl p-6 text-left mb-8 border border-blue-100">
+                <h3 class="font-bold text-blue-700 mb-3 text-lg">📜 Luật chơi:</h3>
+                <ul class="space-y-4 text-gray-700">
+                    <li class="flex items-start">
+                        <span class="mr-2">🔹</span> Gồm 10 câu hỏi trắc nghiệm kiến thức Phân số nâng cao.
+                    </li>
+                    <li class="flex items-start">
+                        <span class="mr-2">🔹</span> Mỗi câu hỏi có&nbsp;<b>40 giây</b>&nbsp;để suy nghĩ và trả lời.
+                    </li>
+                    <li class="flex items-start">
+                        <span class="mr-2">🔹</span> Chỉ được chọn đáp án&nbsp;<b>một lần</b>&nbsp;duy nhất ở mỗi câu hỏi.
+                    </li>
+                    <li class="flex items-start">
+                        <span class="mr-2">🔹</span> Hệ thống tính tổng thời gian bạn hoàn thành toàn bộ bài thi.
+                    </li>
+                </ul>
+            </div>
 
-<body>
+            <button onclick="showLogin()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-xl shadow-lg transition-all">
+                Tôi đã hiểu, tiếp tục
+            </button>
+        </div>
 
-<h1>Bài 2</h1>
+        <!-- Login Screen -->
+        <div id="login-screen" class="hidden glass-card rounded-3xl p-8 text-center animate-fade">
+            <h2 class="text-2xl font-bold text-blue-800 mb-6">Thông tin người chơi</h2>
+            <div class="space-y-4 max-w-sm mx-auto">
+                <div>
+                    <label class="block text-left text-sm font-semibold text-gray-700 mb-1">Họ và tên:</label>
+                    <input type="text" id="player-name" placeholder="Ví dụ: Nguyễn Văn A" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 outline-none">
+                </div>
+                <div>
+                    <label class="block text-left text-sm font-semibold text-gray-700 mb-1">Lớp:</label>
+                    <input type="text" id="player-class" placeholder="Ví dụ: 6A1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 outline-none">
+                </div>
+                <button onclick="startGame()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition-colors">
+                    Bắt đầu làm bài
+                </button>
+            </div>
+        </div>
 
-<p>Nội dung bài tập đang được cập nhật...</p>
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden animate-fade">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex gap-2">
+                    <div class="bg-white px-4 py-2 rounded-full shadow-sm border border-blue-100">
+                        <span class="text-blue-600 font-bold">Câu: <span id="current-index">1</span>/10</span>
+                    </div>
+                    <div class="bg-white px-4 py-2 rounded-full shadow-sm border border-blue-100">
+                        <span class="text-green-600 font-bold">Điểm: <span id="current-score">0</span></span>
+                    </div>
+                </div>
+                <div class="bg-orange-50 px-4 py-2 rounded-full border-2 border-orange-400 flex items-center shadow-sm">
+                    <span class="mr-2 text-orange-600 font-bold">⏱️ <span id="timer-text">40</span>s</span>
+                </div>
+            </div>
 
-<br>
-<a href="../index.html">← Quay về trang chủ</a>
+            <div class="w-full bg-gray-200 h-2 rounded-full mb-6 overflow-hidden">
+                <div id="timer-bar" class="bg-orange-400 h-full w-full timer-bar"></div>
+            </div>
 
+            <div class="glass-card rounded-3xl p-8 mb-6 min-h-[220px] flex flex-col justify-center">
+                <div id="question-text" class="text-xl font-semibold text-gray-800 mb-8 leading-relaxed">
+                    Đang tải câu hỏi...
+                </div>
+                
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                </div>
+            </div>
+
+            <div id="feedback-area" class="hidden glass-card rounded-2xl p-6 border-l-8 mb-6 animate-fade">
+                <h3 id="feedback-status" class="text-xl font-bold mb-2"></h3>
+                <div id="feedback-explanation" class="text-gray-700 text-lg leading-loose"></div>
+                <button onclick="nextQuestion()" class="mt-4 bg-gray-800 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-900 transition-colors">
+                    Tiếp tục
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden glass-card rounded-3xl p-8 text-center animate-fade">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Kết quả bài thi</h2>
+            <div id="final-stats" class="text-6xl font-extrabold text-blue-600 my-4">0/10</div>
+            
+            <div class="bg-blue-50 rounded-2xl p-4 inline-block mb-6 border border-blue-100">
+                <p class="text-gray-700">⏱️ Tổng thời gian hoàn thành: <span id="total-time-spent" class="font-bold text-blue-700">0</span> giây</p>
+            </div>
+
+            <p id="result-comment" class="text-xl text-gray-600 mb-8 px-4"></p>
+            
+            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all mb-10">
+                Làm lại bài thi
+            </button>
+
+            <div class="mt-8 border-t pt-8 text-left">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                    <span class="mr-2">🏆</span> Bảng vàng danh dự
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-gray-500 border-b">
+                                <th class="pb-2">Học sinh</th>
+                                <th class="pb-2 text-center">Lớp</th>
+                                <th class="pb-2 text-center">Thời gian</th>
+                                <th class="pb-2 text-right">Điểm số</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                q: "Tìm số nguyên \\(x\\): \\(\\frac{x-1}{12} = \\frac{-2}{3}\\)",
+                options: ["\\(x = -7\\)", "\\(x = -9\\)", "\\(x = 7\\)", "\\(x = -8\\)"],
+                correct: 0,
+                explain: "Ta có: \\[3 \\cdot (x-1) = 12 \\cdot (-2)\\] \\[3 \\cdot (x-1) = -24\\] \\[x-1 = -8\\] \\[x = -8 + 1 = -7\\]"
+            },
+            {
+                q: "So sánh \\(A = \\frac{-7}{10}\\) và \\(B = \\frac{-11}{15}\\). Khẳng định nào đúng?",
+                options: ["\\(A < B\\)", "\\(A = B\\)", "\\(A > B\\)", "Không thể so sánh"],
+                correct: 2,
+                explain: "Mẫu chung là 30. Quy đồng: \\[A = \\frac{-21}{30}; \\quad B = \\frac{-22}{30}\\] Vì \\(-21 > -22\\) nên \\(A > B\\)."
+            },
+            {
+                q: "Rút gọn phân số \\(\\frac{-120}{150}\\) về dạng phân số tối giản:",
+                options: ["\\(\\frac{-12}{15}\\)", "\\(\\frac{-6}{5}\\)", "\\(\\frac{-4}{5}\\)", "\\(\\frac{4}{5}\\)"],
+                correct: 2,
+                explain: "Chia cả tử và mẫu cho \\(ƯCLN(120, 150) = 30\\): \\[\\frac{-120 : 30}{150 : 30} = \\frac{-4}{5}\\]"
+            },
+            {
+                q: "Giá trị của biểu thức: \\(\\frac{-5}{6} + \\frac{3}{8}\\)",
+                options: ["\\(\\frac{-2}{14}\\)", "\\(\\frac{-11}{24}\\)", "\\(\\frac{-2}{24}\\)", "\\(\\frac{1}{24}\\)"],
+                correct: 1,
+                explain: "BCNN(6, 8) = 24. Quy đồng: \\[\\frac{-20}{24} + \\frac{9}{24} = \\frac{-11}{24}\\]"
+            },
+            {
+                q: "Kết quả phép tính: \\(\\frac{-5}{12} - \\frac{-7}{18}\\)",
+                options: ["\\(\\frac{-1}{36}\\)", "\\(\\frac{-2}{36}\\)", "\\(\\frac{-12}{36}\\)", "\\(\\frac{1}{36}\\)"],
+                correct: 0,
+                explain: "BCNN(12, 18) = 36. Quy đồng: \\[\\frac{-15}{36} - \\frac{-14}{36} = \\frac{-15 + 14}{36} = \\frac{-1}{36}\\]"
+            },
+            {
+                q: "Tìm số nguyên \\(x\\): \\(\\frac{3}{4} : x = \\frac{-9}{16}\\)",
+                options: ["\\(x = \\frac{-4}{3}\\)", "\\(x = \\frac{-27}{64}\\)", "\\(x = \\frac{4}{3}\\)", "\\(x = \\frac{-3}{4}\\)"],
+                correct: 0,
+                explain: "Ta có: \\[x = \\frac{3}{4} : \\frac{-9}{16} = \\frac{3}{4} \\cdot \\frac{16}{-9} = \\frac{-4}{3}\\]"
+            },
+            {
+                q: "Một cửa hàng có \\(120kg\\) gạo. Ngày đầu bán được \\(\\frac{1}{3}\\) số gạo. Ngày thứ hai bán \\(\\frac{2}{5}\\) số gạo <b>còn lại</b>. Sau hai ngày cửa hàng còn bao nhiêu kg gạo?",
+                options: ["\\(32kg\\)", "\\(48kg\\)", "\\(40kg\\)", "\\(72kg\\)"],
+                correct: 1,
+                explain: "Ngày 1 bán: 40kg. Còn lại: 80kg. Ngày 2 bán: \\(80 \\cdot \\frac{2}{5} = 32kg\\). Còn lại: \\(80 - 32 = 48kg\\)."
+            },
+            {
+                q: "Hùng dùng \\(\\frac{2}{7}\\) số tiền mua sách và 150 000 đồng mua dụng cụ học tập thì vừa hết tiền. Lúc đầu Hùng có bao nhiêu tiền?",
+                options: ["210 000 đồng", "105 000 đồng", "525 000 đồng", "350 000 đồng"],
+                correct: 0,
+                explain: "Số tiền mua dụng cụ học tập chiếm: \\[1 - \\frac{2}{7} = \\frac{5}{7} \\text{ (tổng số tiền)}\\] Số tiền ban đầu là: \\[150 000 : \\frac{5}{7} = 210 000 \\text{ (đồng)}\\]"
+            },
+            {
+                q: "Vòi nước chảy vào bể. Giờ 1 chảy được \\(\\frac{1}{4}\\) bể, giờ 2 chảy được \\(\\frac{3}{8}\\) bể. Hỏi vòi còn chảy thêm mấy phần bể nữa thì đầy bể?",
+                options: ["\\(\\frac{5}{8}\\)", "\\(\\frac{3}{8}\\)", "\\(\\frac{1}{2}\\)", "\\(\\frac{1}{8}\\)"],
+                correct: 1,
+                explain: "Tổng đã chảy: \\(\\frac{2}{8} + \\frac{3}{8} = \\frac{5}{8}\\). Còn lại: \\(1 - \\frac{5}{8} = \\frac{3}{8}\\) bể."
+            },
+            {
+                q: "Bà Lan bán trứng. Ngày đầu bà bán \\(\\frac{2}{5}\\) số trứng. Ngày hai bà bán \\(\\frac{5}{6}\\) số trứng <b>còn lại</b>. Ngày thứ ba bà bán nốt 15 quả cuối thì hết. Hỏi ban đầu bà Lan có bao nhiêu quả trứng?",
+                options: ["100 quả", "150 quả", "120 quả", "200 quả"],
+                correct: 1,
+                explain: "Còn sau ngày 1: \\(1 - \\frac{2}{5} = \\frac{3}{5}\\). Ngày 2 bán: \\(\\frac{3}{5} \\cdot \\frac{5}{6} = \\frac{1}{2}\\) tổng trứng. Sau 2 ngày còn: \\(\\frac{3}{5} - \\frac{1}{2} = \\frac{1}{10}\\) tổng trứng. Ban đầu có: \\(15 : \\frac{1}{10} = 150\\) quả."
+            }
+        ];
+
+        let currentIdx = 0;
+        let score = 0;
+        let timer = null;
+        let timeLeft = 40;
+        let playerName = "";
+        let playerClass = "";
+        let startTime = 0;
+        let totalTimeUsed = 0;
+
+        function showLogin() {
+            document.getElementById('intro-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        function startGame() {
+            playerName = document.getElementById('player-name').value.trim();
+            playerClass = document.getElementById('player-class').value.trim();
+
+            if (!playerName || !playerClass) {
+                alert("Vui lòng nhập đầy đủ Họ tên và Lớp!");
+                return;
+            }
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            startTime = Date.now();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentIdx];
+            document.getElementById('current-index').textContent = currentIdx + 1;
+            document.getElementById('question-text').innerHTML = q.q;
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left p-4 rounded-2xl border-2 border-gray-100 bg-white hover:border-blue-400 font-medium text-gray-700";
+                btn.innerHTML = `<span class="inline-block w-8 h-8 bg-blue-50 text-blue-600 rounded-lg text-center leading-8 mr-3 font-bold">${String.fromCharCode(65 + i)}</span> ${opt}`;
+                btn.onclick = () => selectOption(i);
+                container.appendChild(btn);
+            });
+
+            resetTimer();
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+            document.getElementById('feedback-area').classList.add('hidden');
+        }
+
+        function selectOption(idx) {
+            clearInterval(timer);
+            const q = questions[currentIdx];
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.disabled = true);
+
+            const feedback = document.getElementById('feedback-area');
+            const status = document.getElementById('feedback-status');
+            const explanation = document.getElementById('feedback-explanation');
+
+            feedback.classList.remove('hidden');
+            
+            if (idx === q.correct) {
+                score++;
+                document.getElementById('current-score').textContent = score;
+                status.textContent = "Chính xác! 🎉";
+                status.className = "text-xl font-bold mb-2 text-green-600";
+                explanation.innerHTML = `<div class='bg-green-50 p-4 rounded-xl border border-green-200'><b>Cách giải:</b><br>${q.explain}</div>`;
+                buttons[idx].className += " border-green-500 bg-green-50 text-green-800";
+                feedback.className = "glass-card rounded-2xl p-6 border-l-8 border-green-500 mb-6 animate-fade";
+            } else {
+                status.textContent = "Chưa đúng rồi! ❌";
+                status.className = "text-xl font-bold mb-2 text-red-600";
+                explanation.textContent = "Hãy kiểm tra kỹ các bước quy đồng và tính toán phân số nhé.";
+                buttons[idx].className += " border-red-500 bg-red-50 text-red-800";
+                feedback.className = "glass-card rounded-2xl p-6 border-l-8 border-red-500 mb-6 animate-fade";
+            }
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+
+        function nextQuestion() {
+            currentIdx++;
+            if (currentIdx < questions.length) {
+                showQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            timeLeft = 40;
+            updateTimerUI();
+
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerUI();
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeOut();
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            document.getElementById('timer-text').textContent = timeLeft;
+            const bar = document.getElementById('timer-bar');
+            const percentage = (timeLeft / 40) * 100;
+            bar.style.width = percentage + '%';
+            
+            if (timeLeft <= 10) bar.className = "bg-red-500 h-full w-full timer-bar";
+            else bar.className = "bg-orange-400 h-full w-full timer-bar";
+        }
+
+        function timeOut() {
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.disabled = true);
+            const feedback = document.getElementById('feedback-area');
+            const status = document.getElementById('feedback-status');
+            feedback.classList.remove('hidden');
+            status.textContent = "Hết giờ rồi! ⏰";
+            status.className = "text-xl font-bold mb-2 text-orange-600";
+            document.getElementById('feedback-explanation').textContent = "Tiếc quá, thời gian suy nghĩ đã hết rồi.";
+        }
+
+        function endGame() {
+            totalTimeUsed = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-stats').textContent = `${score}/10`;
+            document.getElementById('total-time-spent').textContent = totalTimeUsed;
+            
+            const comment = document.getElementById('result-comment');
+            if (score === 10) comment.textContent = "Tuyệt vời! Bạn là một thiên tài về phân số!";
+            else if (score >= 8) comment.textContent = "Rất tốt! Bạn làm bài rất chắc chắn.";
+            else if (score >= 5) comment.textContent = "Kết quả khá tốt, hãy rèn luyện thêm nhé.";
+            else comment.textContent = "Bạn hãy ôn tập lại các quy tắc tính toán phân số nhé.";
+
+            saveResult();
+            displayLeaderboard();
+        }
+
+        function saveResult() {
+            let leaderboard = JSON.parse(localStorage.getItem('math_scores_final_v6') || "[]");
+            leaderboard.push({
+                name: playerName,
+                class: playerClass,
+                score: score,
+                time: totalTimeUsed
+            });
+            leaderboard.sort((a, b) => b.score - a.score || a.time - b.time);
+            localStorage.setItem('math_scores_final_v6', JSON.stringify(leaderboard.slice(0, 10)));
+        }
+
+        function displayLeaderboard() {
+            const leaderboard = JSON.parse(localStorage.getItem('math_scores_final_v6') || "[]");
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = '';
+            leaderboard.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = "border-b border-gray-100";
+                row.innerHTML = `
+                    <td class="py-3 font-medium text-gray-800">${item.name}</td>
+                    <td class="py-3 text-center text-gray-600">${item.class || 'N/A'}</td>
+                    <td class="py-3 text-center text-gray-500 font-bold">${item.time} giây</td>
+                    <td class="py-3 text-right font-bold text-blue-600">${item.score}/10</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    </script>
 </body>
 </html>
