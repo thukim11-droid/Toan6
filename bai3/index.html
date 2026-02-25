@@ -1,18 +1,423 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Bài 3</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trắc nghiệm Toán 6 - Số thập phân</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            min-height: 100vh;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+        .option-btn {
+            transition: all 0.2s;
+            border: 2px solid #e2e8f0;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+        }
+        .hidden { display: none; }
+        .timer-bar {
+            transition: width 1s linear;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .mascot {
+            animation: bounce 2s infinite ease-in-out;
+        }
+    </style>
 </head>
+<body class="p-4 flex items-center justify-center">
 
-<body>
+    <div id="game-container" class="w-full max-w-2xl">
+        <!-- Trang bắt đầu -->
+        <div id="start-screen" class="card p-8 text-center">
+            <div class="mb-6 flex justify-center">
+                <!-- SVG Mascot vui nhộn -->
+                <svg class="mascot w-24 h-24" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="#22c55e" />
+                    <path d="M30 40 Q50 20 70 40" stroke="white" stroke-width="4" fill="none" />
+                    <circle cx="35" cy="45" r="5" fill="white" />
+                    <circle cx="65" cy="45" r="5" fill="white" />
+                    <path d="M40 70 Q50 80 60 70" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" />
+                    <rect x="45" y="10" width="10" height="20" fill="#16a34a" rx="2" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-green-700 mb-2">Toán 6: Chinh Phục Số Thập Phân</h1>
+            
+            <div class="bg-green-50 p-6 rounded-2xl mb-6 text-left border border-green-100">
+                <h3 class="font-bold text-green-800 mb-3 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Luật chơi:
+                </h3>
+                <ul class="text-base text-gray-700 space-y-2 list-disc list-inside">
+                    <li>Gồm <b>10 câu hỏi</b> nâng cao về số thập phân.</li>
+                    <li>Mỗi câu có <b>40 giây</b> để hoàn thành.</li>
+                    <li>Mỗi câu chỉ được chọn đáp án <b>một lần duy nhất</b>.</li>
+                    <li>Dùng dấu <b>phẩy (,)</b> để ngăn cách phần thập phân.</li>
+                </ul>
+            </div>
+            
+            <div class="space-y-4 max-w-xs mx-auto">
+                <input type="text" id="player-name" placeholder="Họ và tên của em" class="w-full p-4 border-2 border-green-100 rounded-xl focus:border-green-500 outline-none transition-all">
+                <input type="text" id="player-class" placeholder="Lớp (ví dụ: 6A1)" class="w-full p-4 border-2 border-green-100 rounded-xl focus:border-green-500 outline-none transition-all">
+                <button id="start-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition shadow-lg hover:shadow-xl active:scale-95">Bắt đầu làm bài</button>
+            </div>
+        </div>
 
-<h1>Bài 3</h1>
+        <!-- Trang câu hỏi -->
+        <div id="quiz-screen" class="card p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-sm font-bold text-green-600 px-3 py-1 bg-green-50 rounded-full" id="question-number">Câu hỏi 1/10</span>
+                <span class="text-sm font-bold text-orange-500" id="timer-text">Thời gian: 40s</span>
+            </div>
+            <div class="w-full bg-gray-100 h-3 rounded-full mb-6 overflow-hidden">
+                <div id="timer-bar" class="bg-green-500 h-full w-full timer-bar"></div>
+            </div>
 
-<p>Nội dung bài tập đang được cập nhật...</p>
+            <div id="question-content" class="mb-8">
+                <h2 id="question-text" class="text-xl font-semibold text-gray-800 mb-6 leading-relaxed min-h-[60px]">Đang tải câu hỏi...</h2>
+                <div id="options-container" class="grid grid-cols-1 gap-3"></div>
+            </div>
 
-<br>
-<a href="../index.html">← Quay về trang chủ</a>
+            <div id="feedback-area" class="mt-4 p-5 rounded-2xl hidden transition-all">
+                <div class="flex items-center mb-2">
+                    <p id="feedback-status" class="font-bold text-lg"></p>
+                </div>
+                <p id="feedback-explanation" class="text-gray-700 text-sm italic leading-relaxed border-l-4 border-green-200 pl-4"></p>
+                <button id="next-btn" class="mt-6 bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3 rounded-xl float-right shadow-md transition">Tiếp tục</button>
+            </div>
+        </div>
 
+        <!-- Trang kết quả -->
+        <div id="result-screen" class="card p-8 hidden">
+            <h2 class="text-3xl font-bold text-green-700 mb-2 text-center">Kết Quả Bài Làm</h2>
+            <p class="text-center text-gray-500 mb-8" id="result-info">Hoàn thành thử thách!</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-green-50 p-6 rounded-2xl text-center">
+                    <p class="text-sm text-green-600 font-bold uppercase mb-1">Điểm số</p>
+                    <p class="text-4xl font-bold text-green-700" id="final-score">0/10</p>
+                </div>
+                <div class="bg-orange-50 p-6 rounded-2xl text-center">
+                    <p class="text-sm text-orange-600 font-bold uppercase mb-1">Thời gian</p>
+                    <p class="text-4xl font-bold text-orange-700" id="final-time">0s</p>
+                </div>
+            </div>
+
+            <p class="text-center text-lg font-medium text-gray-700 mb-8 italic" id="score-comment"></p>
+
+            <div class="border-t pt-6 mb-8">
+                <h3 class="font-bold text-xl mb-4 text-green-700 text-center">Bảng Xếp Hạng</h3>
+                <div class="max-h-60 overflow-y-auto rounded-xl border border-gray-100">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="p-3 text-xs font-bold text-gray-500 uppercase">Học sinh</th>
+                                <th class="p-3 text-xs font-bold text-gray-500 uppercase">Lớp</th>
+                                <th class="p-3 text-xs font-bold text-gray-500 uppercase text-center">Điểm</th>
+                                <th class="p-3 text-xs font-bold text-gray-500 uppercase text-right">Thời gian</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body" class="divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <button id="restart-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition shadow-lg">Làm lại bài mới</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'math-6-decimal-master';
+
+        let user = null;
+        let currentQuestion = 0;
+        let score = 0;
+        let timer = null;
+        let timeLeft = 40;
+        let hasAnswered = false;
+        let gameStartTime = 0;
+        let totalTimeUsed = 0;
+
+        const questions = [
+            {
+                q: "Phân số nào sau đây có thể viết được dưới dạng số thập phân hữu hạn?",
+                options: ["7/30", "11/40", "5/6", "13/15"],
+                answer: 1,
+                explain: "40 = 2³ . 5 (chỉ chứa thừa số nguyên tố 2 và 5) nên 11/40 viết được dưới dạng số thập phân hữu hạn."
+            },
+            {
+                q: "Tìm số thập phân x, biết: 2,5 . x = 0,5 . 1,25",
+                options: ["0,25", "2,5", "0,625", "0,5"],
+                answer: 0,
+                explain: "2,5 . x = 0,625 => x = 0,625 : 2,5 = 0,25."
+            },
+            {
+                q: "Tính giá trị biểu thức: A = 12,35 + 3,65 - 4,5 . 2",
+                options: ["16", "9", "7", "11,5"],
+                answer: 2,
+                explain: "A = (12,35 + 3,65) - 9 = 16 - 9 = 7."
+            },
+            {
+                q: "Viết số thập phân vô hạn tuần hoàn 0,(15) sang phân số tối giản:",
+                options: ["15/100", "15/99", "5/33", "1/6"],
+                answer: 2,
+                explain: "0,(15) = 15/99. Rút gọn cho 3 ta được 5/33."
+            },
+            {
+                q: "Tính nhanh: B = 0,25 . 1,21 . 40",
+                options: ["12,1", "1,21", "121", "12,5"],
+                answer: 0,
+                explain: "B = (0,25 . 40) . 1,21 = 10 . 1,21 = 12,1."
+            },
+            {
+                q: "Tìm x, biết: (x + 1,5) : 0,5 = 6,2",
+                options: ["1,6", "4,6", "3,1", "2,1"],
+                answer: 0,
+                explain: "x + 1,5 = 6,2 . 0,5 = 3,1 => x = 3,1 - 1,5 = 1,6."
+            },
+            {
+                q: "Kết quả của phép tính 0,15 : 0,25 + 0,4 là:",
+                options: ["1", "0,64", "0,46", "0,1"],
+                answer: 0,
+                explain: "0,15 : 0,25 = 15 : 25 = 0,6. Vậy 0,6 + 0,4 = 1."
+            },
+            {
+                q: "So sánh M = 0,5 + 0,3 và N = 0,96 : 1,2",
+                options: ["M > N", "M < N", "M = N", "Không so sánh được"],
+                answer: 2,
+                explain: "M = 0,8. N = 9,6 : 12 = 0,8. Vậy M = N."
+            },
+            {
+                q: "Một cửa hàng có 150kg đường. Buổi sáng bán 0,3 số đường. Buổi chiều bán 0,5 số đường còn lại. Hỏi cửa hàng còn bao nhiêu kg đường?",
+                options: ["30kg", "52,5kg", "75kg", "45kg"],
+                answer: 1,
+                explain: "Sáng bán: 150 . 0,3 = 45kg. Còn lại: 150 - 45 = 105kg. Chiều bán: 105 . 0,5 = 52,5kg. Còn lại: 105 - 52,5 = 52,5kg."
+            },
+            {
+                q: "Giá trị của x thỏa mãn: 0,1 + 0,2 + ... + 0,9 + x = 10",
+                options: ["5,5", "4,5", "6,5", "5,4"],
+                answer: 0,
+                explain: "Tổng 0,1 + ... + 0,9 = (0,1 + 0,9) . 9 : 2 = 4,5. Vậy 4,5 + x = 10 => x = 5,5."
+            }
+        ];
+
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const timerText = document.getElementById('timer-text');
+        const timerBar = document.getElementById('timer-bar');
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackStatus = document.getElementById('feedback-status');
+        const feedbackExplanation = document.getElementById('feedback-explanation');
+        const nextBtn = document.getElementById('next-btn');
+        const leaderboardBody = document.getElementById('leaderboard-body');
+
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+
+        onAuthStateChanged(auth, (u) => {
+            user = u;
+            if (user) loadLeaderboard();
+        });
+
+        initAuth();
+
+        function startQuiz() {
+            const name = document.getElementById('player-name').value.trim();
+            const pClass = document.getElementById('player-class').value.trim();
+            if (!name || !pClass) {
+                showSimpleMessage("Em hãy điền Tên và Lớp nhé!");
+                return;
+            }
+            startScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            gameStartTime = Date.now();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            hasAnswered = false;
+            feedbackArea.classList.add('hidden');
+            const q = questions[currentQuestion];
+            document.getElementById('question-number').innerText = `Câu hỏi ${currentQuestion + 1}/10`;
+            questionText.innerText = q.q;
+            optionsContainer.innerHTML = '';
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full p-4 text-left rounded-xl bg-white font-medium text-gray-700 shadow-sm outline-none";
+                btn.innerText = opt;
+                btn.onclick = () => selectOption(index);
+                optionsContainer.appendChild(btn);
+            });
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timeLeft = 40;
+            updateTimerUI();
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerUI();
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    if (!hasAnswered) handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            timerText.innerText = `Thời gian: ${timeLeft}s`;
+            const percent = (timeLeft / 40) * 100;
+            timerBar.style.width = `${percent}%`;
+            timerBar.className = timeLeft <= 10 ? "bg-red-500 h-full w-full timer-bar" : "bg-green-500 h-full w-full timer-bar";
+        }
+
+        function selectOption(index) {
+            if (hasAnswered) return;
+            hasAnswered = true;
+            clearInterval(timer);
+            const q = questions[currentQuestion];
+            const isCorrect = index === q.answer;
+            const btns = optionsContainer.querySelectorAll('button');
+            btns.forEach((btn, i) => {
+                btn.disabled = true;
+                if (i === index) {
+                    btn.classList.add(isCorrect ? 'bg-green-100' : 'bg-red-100');
+                    btn.classList.add(isCorrect ? 'border-green-500' : 'border-red-500');
+                }
+            });
+            feedbackArea.classList.remove('hidden');
+            if (isCorrect) {
+                score++;
+                feedbackStatus.innerText = "Chính xác! 🌟";
+                feedbackStatus.className = "font-bold text-lg mb-1 text-green-600";
+                feedbackExplanation.innerText = q.explain;
+            } else {
+                feedbackStatus.innerText = "Chưa đúng rồi! 🧊";
+                feedbackStatus.className = "font-bold text-lg mb-1 text-red-600";
+                feedbackExplanation.innerText = ""; 
+            }
+        }
+
+        function handleTimeOut() {
+            hasAnswered = true;
+            const btns = optionsContainer.querySelectorAll('button');
+            btns.forEach(btn => btn.disabled = true);
+            feedbackArea.classList.remove('hidden');
+            feedbackStatus.innerText = "Hết giờ! ⏰";
+            feedbackStatus.className = "font-bold text-lg mb-1 text-orange-600";
+            feedbackExplanation.innerText = "Hãy tập trung hơn ở câu sau nhé!";
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                finishGame();
+            }
+        }
+
+        async function finishGame() {
+            totalTimeUsed = Math.floor((Date.now() - gameStartTime) / 1000);
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            
+            document.getElementById('final-score').innerText = `${score}/10`;
+            document.getElementById('final-time').innerText = `${totalTimeUsed}s`;
+            
+            const comment = document.getElementById('score-comment');
+            if (score >= 9) comment.innerText = "Xuất sắc! Em nắm rất vững kiến thức số thập phân. 🏆";
+            else if (score >= 7) comment.innerText = "Rất tốt! Em đã làm bài rất cẩn thận. 👏";
+            else if (score >= 5) comment.innerText = "Cố gắng lên! Em cần luyện tập thêm các bài toán nâng cao. 📚";
+            else comment.innerText = "Hãy ôn lại kiến thức và thử lại lần nữa nhé! 💪";
+
+            if (user) {
+                const name = document.getElementById('player-name').value;
+                const pClass = document.getElementById('player-class').value;
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', user.uid), {
+                        name: name,
+                        class: pClass,
+                        score: score,
+                        time: totalTimeUsed,
+                        timestamp: Date.now()
+                    });
+                } catch (e) { console.error(e); }
+            }
+        }
+
+        function loadLeaderboard() {
+            if (!user) return;
+            const q = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+            onSnapshot(q, (snapshot) => {
+                const results = [];
+                snapshot.forEach(doc => results.push(doc.data()));
+                results.sort((a, b) => b.score - a.score || a.time - b.time);
+                leaderboardBody.innerHTML = '';
+                results.slice(0, 10).forEach(res => {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-green-50 transition-colors";
+                    row.innerHTML = `
+                        <td class="p-3 text-sm text-gray-700 font-semibold">${res.name}</td>
+                        <td class="p-3 text-sm text-gray-500">${res.class}</td>
+                        <td class="p-3 text-sm text-center font-bold text-green-600">${res.score}/10</td>
+                        <td class="p-3 text-sm text-right text-orange-600">${res.time}s</td>
+                    `;
+                    leaderboardBody.appendChild(row);
+                });
+            }, (err) => console.error(err));
+        }
+
+        function showSimpleMessage(msg) {
+            const msgBox = document.createElement('div');
+            msgBox.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-8 py-4 rounded-full shadow-2xl z-50 animate-bounce";
+            msgBox.innerText = msg;
+            document.body.appendChild(msgBox);
+            setTimeout(() => msgBox.remove(), 2500);
+        }
+
+        document.getElementById('start-btn').onclick = startQuiz;
+        nextBtn.onclick = nextQuestion;
+        document.getElementById('restart-btn').onclick = () => {
+            currentQuestion = 0;
+            score = 0;
+            resultScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        };
+    </script>
 </body>
 </html>
